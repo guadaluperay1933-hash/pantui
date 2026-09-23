@@ -3,13 +3,15 @@
 用法: python3 tools/build_pdf.py   (在 图形推理教程/ 目录或任意目录运行均可)
 依赖: pip install markdown-it-py mdit-py-plugins；Chromium（环境变量 CHROME 可指定路径）。
 Markdown 按 CommonMark + GFM 表格解析，与 GitHub 网页上的显示保持一致。"""
-import glob, os, re, subprocess, sys
+import glob, os, re, shutil, subprocess, sys
 from markdown_it import MarkdownIt
+from PIL import Image
 from mdit_py_plugins.anchors import anchors_plugin
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CHROME = os.environ.get("CHROME", "/opt/pw-browsers/chromium-1194/chrome-linux/chrome")
-OUT_HTML = os.path.join(ROOT, "tools", "_book.html")
+BUILD = os.path.join(ROOT, "tools", "_build")  # 压缩后的图片副本（JPEG 质量 70），让 PDF 控制在 30MB 以内
+OUT_HTML = os.path.join(BUILD, "_book.html")
 OUT_PDF = os.path.join(ROOT, "图形推理教程.pdf")
 
 files = [os.path.join(ROOT, "README.md")] + sorted(glob.glob(os.path.join(ROOT, "[0-9][0-9]-*.md")))
@@ -77,9 +79,15 @@ for lvl, name, anchor in toc:
     toc_html.append(f'<li class="l{lvl}" style="margin-left:{(lvl-1)*1.2}em"><a href="#{anchor}">{_h.escape(name)}</a></li>')
 toc_html.append("</ul></nav>")
 
+for src in glob.glob(os.path.join(ROOT, "images", "*", "*.jpg")):
+    dst = os.path.join(BUILD, os.path.relpath(src, ROOT))
+    if not os.path.exists(dst) or os.path.getmtime(dst) < os.path.getmtime(src):
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        Image.open(src).convert("RGB").save(dst, quality=70, optimize=True)
+
 body = parts[0] + "".join(toc_html) + "".join(parts[1:])
 doc = f"""<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
-<base href="file://{ROOT}/"><title>图形推理教程</title><style>{CSS}</style></head><body>{body}</body></html>"""
+<base href="file://{BUILD}/"><title>图形推理教程</title><style>{CSS}</style></head><body>{body}</body></html>"""
 open(OUT_HTML, "w", encoding="utf-8").write(doc)
 cmd = [CHROME, "--headless=new", "--no-sandbox", "--disable-gpu", "--no-pdf-header-footer",
        "--allow-file-access-from-files", f"--print-to-pdf={OUT_PDF}", "file://" + OUT_HTML]
