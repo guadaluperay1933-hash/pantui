@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """把 README.md + 各章 Markdown 合并为一个带目录的 HTML，再用 Chromium 打印成 PDF。
 用法: python3 tools/build_pdf.py   (在 图形推理教程/ 目录或任意目录运行均可)
-依赖: pip install markdown；Chromium（环境变量 CHROME 可指定路径）。"""
+依赖: pip install markdown-it-py mdit-py-plugins；Chromium（环境变量 CHROME 可指定路径）。
+Markdown 按 CommonMark + GFM 表格解析，与 GitHub 网页上的显示保持一致。"""
 import glob, os, re, subprocess, sys
-import markdown
+from markdown_it import MarkdownIt
+from mdit_py_plugins.anchors import anchors_plugin
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CHROME = os.environ.get("CHROME", "/opt/pw-browsers/chromium-1194/chrome-linux/chrome")
@@ -52,22 +54,25 @@ parts, toc = [], []
 for i, f in enumerate(files):
     src = open(f, encoding="utf-8").read()
     base = slug_base(f)
-    md = markdown.Markdown(extensions=["tables", "fenced_code", "sane_lists", "attr_list", "toc"],
-                           extension_configs={"toc": {"slugify": lambda v, s, b=base: f"{b}-" + re.sub(r"\W+", "-", v).strip("-")}})
-    html = md.convert(src)
+    md = (MarkdownIt("commonmark", {"html": True}).enable("table").enable("strikethrough")
+          .use(anchors_plugin, min_level=1, max_level=2,
+               slug_func=lambda v, b=base: f"{b}-" + re.sub(r"\W+", "-", v).strip("-")))
+    tokens = md.parse(src)
+    for k, t in enumerate(tokens):
+        if i > 0 and t.type == "heading_open" and t.tag in ("h1", "h2"):
+            toc.append((int(t.tag[1]), tokens[k + 1].content, t.attrGet("id")))
+    html = md.renderer.render(tokens, md.options, {})
     # 章节间的相对链接 xxx.md -> 锚点
     html = re.sub(r'href="(\d\d-[^"#]+|README)\.md(#[^"]*)?"', lambda m: f'href="#{m.group(1)}-top"', html)
     if i == 0:
         html = html.replace("<h1", '<h1 class="first"', 1)
     parts.append(f'<section id="{base}-top">{html}</section>')
-    for t in md.toc_tokens:
-        toc.append((1, t["name"], t["id"]))
-        for c in t.get("children", []):
-            toc.append((2, c["name"], c["id"]))
 
 toc_html = ['<nav class="toc"><h1>目录</h1><ul>']
+import html as _h
 for lvl, name, anchor in toc:
-    toc_html.append(f'<li class="l{lvl}" style="margin-left:{(lvl-1)*1.2}em"><a href="#{anchor}">{name}</a></li>')
+    name = re.sub(r"[*`]", "", name)
+    toc_html.append(f'<li class="l{lvl}" style="margin-left:{(lvl-1)*1.2}em"><a href="#{anchor}">{_h.escape(name)}</a></li>')
 toc_html.append("</ul></nav>")
 
 body = parts[0] + "".join(toc_html) + "".join(parts[1:])
