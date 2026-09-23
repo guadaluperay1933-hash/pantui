@@ -35,7 +35,9 @@ th, td { border: 1px solid #d6d3d1; padding: .35em .5em; vertical-align: top; }
 th { background: #ffedd5; }
 tr { break-inside: avoid; }
 code { background: #f5f5f4; padding: 0 .25em; border-radius: 3px; font-size: .92em; }
-pre { background: #f5f5f4; padding: .6em; border-radius: 4px; white-space: pre-wrap; font-size: .9em; }
+pre { background: #f5f5f4; padding: .6em; border-radius: 4px; white-space: pre; font-size: .8em; line-height: 1.45;
+      font-family: "Noto Sans Mono CJK SC", "WenQuanYi Zen Hei Mono", monospace; break-inside: auto; }
+pre code { background: none; padding: 0; font-size: 1em; font-family: inherit; }
 strong { color: #9a3412; }
 hr { border: none; border-top: 1px dashed #d6d3d1; margin: 1.2em 0; }
 nav.toc { break-after: page; }
