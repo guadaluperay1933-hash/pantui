@@ -40,11 +40,15 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15p
 header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px 16px}
 h1{font-family:var(--serif);font-weight:700;font-size:1.45rem;margin:0;letter-spacing:.02em;text-wrap:balance}
 .lesson{color:var(--muted);font-size:.9rem}
-.layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;align-items:start}
-@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)}}
+.layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);grid-template-areas:"stage panel" "nets panel";gap:16px;align-items:start}
+.stage-col{grid-area:stage}.panel{grid-area:panel}.nets{grid-area:nets}
+@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr);grid-template-areas:"stage" "panel" "nets"}}
+@media (max-width:600px){
+  .stage-col{position:sticky;top:env(safe-area-inset-top,0px);z-index:2;background:var(--bg);padding-block:4px 6px;margin-block:-4px 0}
+  .stage{aspect-ratio:auto;height:min(46vh,100vw - 32px)}
+}
 .stage-col{display:flex;flex-direction:column;gap:10px;min-width:0}
 .stage{position:relative;background:var(--stage);border-radius:10px;overflow:hidden;aspect-ratio:4/3;max-height:72vh;width:100%}
-@media (max-width:600px){.stage{aspect-ratio:1/1}}
 .stage canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
 .stage canvas:active{cursor:grabbing}
 .hud{position:absolute;left:10px;bottom:8px;font-size:.78rem;color:var(--muted);pointer-events:none}
@@ -57,6 +61,7 @@ button{font:inherit;color:inherit}
 .btn.on{background:var(--accent-soft);border-color:var(--accent)}
 .fold-bar{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
 .fold-bar label{font-size:.86rem;color:var(--muted);white-space:nowrap}
+#playBtn{min-width:5.2em}
 .fold-bar input{flex:1;min-width:0;accent-color:var(--accent)}
 .fold-bar output{font-variant-numeric:tabular-nums;width:3.2em;text-align:right;font-size:.9rem}
 .nets{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
@@ -127,10 +132,11 @@ button{font:inherit;color:inherit}
         <input id="fold" type="range" min="0" max="90" step="1" value="0">
         <output id="foldOut" for="fold">0°</output>
       </div>
-      <div class="nets">
-        <div class="nets-head"><b>换一个展开图</b><span>正方体一共 11 种展开图</span></div>
-        <div class="net-groups" id="netGroups"></div>
-      </div>
+    </section>
+
+    <section class="nets" aria-label="展开图列表">
+      <div class="nets-head"><b>换一个展开图</b><span>正方体一共 11 种展开图</span></div>
+      <div class="net-groups" id="netGroups"></div>
     </section>
 
     <aside class="panel" aria-label="步骤与操作">
@@ -146,12 +152,12 @@ button{font:inherit;color:inherit}
       <div class="step" data-body="1" role="tabpanel">
         <h2>折起来看</h2>
         <ol class="todo">
-          <li>在左下方选一个展开图。</li>
+          <li>在“换一个展开图”里选一个展开图。</li>
           <li>慢慢拖“折叠角度”，从 0° 拖到 90°。</li>
           <li>只盯住一个字母，看它最后落在正方体的哪一面。</li>
           <li>折好以后，拖动画面转一圈，看看每个字母的朝向。</li>
         </ol>
-        <p class="note">展开图画的是正方体的<b>外表面</b>，所以字母在外面。灰色的一面是盒子的里面。中间有一个面始终不动，其余的面都绕着自己和邻居之间的那条边往后折。</p>
+        <p class="note">展开图画的是正方体的<b>外表面</b>，所以字母在外面，灰色的一面是盒子的里面。有一个面始终不动（一开始是 <b>F</b>，折好后它正对着你）。其余每个面都绕着它和“离不动的面更近的那个邻居”之间的那条边往后折。所有面同时折，折到 90° 时正好合成正方体。</p>
       </div>
 
       <div class="step" data-body="2" role="tabpanel" hidden>
@@ -193,12 +199,12 @@ button{font:inherit;color:inherit}
           <li>折起来看，这几个红点最后都会汇到正方体的同一个角上。</li>
         </ol>
         <div class="msg" id="msg4" aria-live="polite">点一个格子的角。</div>
-        <p class="note">正方体的每个顶点都连着 3 个面。展开以后，这 3 个面不一定挨在一起，所以同一个顶点可能在展开图里出现 1 到 3 次。</p>
+        <p class="note">正方体的每个顶点连着 3 个面、3 条棱。这 3 条棱里每有 1 条没剪开，就有两个角在展开图里并成一个点。3 条棱最多只有 2 条没剪开（否则这 3 个面会连成一圈），所以这个顶点在展开图里出现“3 减去没剪开的条数”次，也就是 1 到 3 次。</p>
       </div>
 
       <div class="step" data-body="5" role="tabpanel" hidden>
         <h2>转圈方向</h2>
-        <p>左边的展开图能折成下面哪一个？</p>
+        <p>三维区里的这个展开图，能折成下面哪一个？</p>
         <div class="opts" id="opts"></div>
         <div class="msg" id="msg5" aria-live="polite">先自己判断，再点选项。</div>
         <div class="row"><button class="btn" id="newQuiz" type="button">换一题</button><span class="score" id="score5">对 0 / 共 0</span></div>
@@ -386,8 +392,7 @@ const inPlaneDirs=w=>[[1,0,0],[0,1,0],[0,0,1],[-1,0,0],[0,-1,0],[0,0,-1]].filter
 // 顺时针（从 (1,1,1) 方向看）：上 → 右 → 前
 const VIEW_ORDER=['Y','X','Z'];
 
-let rngState=20260924;
-const rnd=n=>{rngState=(rngState*1103515245+12345)&0x7fffffff;return rngState%n;};
+const rnd=n=>Math.floor(Math.random()*n);
 const pick=a=>a[rnd(a.length)];
 
 function makeQuiz(){
@@ -447,8 +452,8 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
 const scene=new THREE.Scene();
 const camera=new THREE.PerspectiveCamera(32,1,0.1,200);
 scene.add(camera);
-scene.add(new THREE.HemisphereLight(0xffffff,0x9aa6ad,0.72));
-const sun=new THREE.DirectionalLight(0xffffff,0.5);sun.position.set(2.5,3,4);camera.add(sun);
+scene.add(new THREE.HemisphereLight(0xffffff,0x9aa6ad,0.74));
+const sun=new THREE.DirectionalLight(0xffffff,0.5);sun.position.set(1.2,1.6,4);camera.add(sun);camera.add(sun.target);sun.target.position.set(0,0,-1);
 
 const PLANE=new THREE.PlaneGeometry(1,1);
 const TEX=256;
@@ -524,9 +529,16 @@ function buildScene(){
   }
   applyFold();redrawAll();fitCamera();
 }
+const _m4=new THREE.Matrix4(),_qT=new THREE.Quaternion(),_q=new THREE.Quaternion(),_C=new THREE.Vector3();
 function applyFold(){
   const a=fold*Math.PI/180;
   for(let f=0;f<6;f++)if(faces[f].hinge)faces[f].hinge.quaternion.setFromAxisAngle(faces[f].axis,a);
+  // 折好后的正方体 = 标准正方体经 Q[root] 旋转；按折叠进度转回来，保证 F 始终在前、P 在上
+  const R=tr(st.Q[st.root]);
+  _m4.set(R[0][0],R[0][1],R[0][2],0,R[1][0],R[1][1],R[1][2],0,R[2][0],R[2][1],R[2][2],0,0,0,0,1);
+  _qT.setFromRotationMatrix(_m4);_q.identity().slerp(_qT,fold/90);
+  _C.set(st.cell[st.root][0],st.cell[st.root][1],-0.5);
+  netGroup.quaternion.copy(_q);netGroup.position.copy(_C).sub(_C.clone().applyQuaternion(_q));
   ghostGroup.visible=fold===0;
   updateCamera();requestRender();
 }
@@ -535,7 +547,8 @@ function applyFold(){
 const orbit={theta:0.32,phi:1.28,zoom:1};
 const DEFAULT_ORBIT={theta:0.32,phi:1.28};
 function netBox(){
-  const xs=st.cell.map(c=>c[0]),ys=st.cell.map(c=>c[1]);
+  const pts=st.cell.concat(s6&&s6.sel!=null?s6.cands.map(c=>c.cell[s6.sel]):[]);
+  const xs=pts.map(c=>c[0]),ys=pts.map(c=>c[1]);
   return {cx:(Math.min(...xs)+Math.max(...xs))/2,cy:(Math.min(...ys)+Math.max(...ys))/2,w:Math.max(...xs)-Math.min(...xs)+1,h:Math.max(...ys)-Math.min(...ys)+1};
 }
 function fitDist(radius){
@@ -638,10 +651,11 @@ function step2Tap(f){
   }else{
     const a=s2.first,o=opposite(a);s2.total++;hl.ring=null;paintOpp();
     const why=oppositeReason(st,a,o);
-    const whyText=why==='line'?'它们在同一行（或同一列），中间正好隔着一个面。':why==='z'?'它们在一个 Z 字形（或拉长的 Z 字形）的两端。':'';
+    const whyText=why==='line'?'它们在同一行（或同一列），中间正好隔着一个面。':why==='z'?'它们分别挂在一排面的两头，一个在这排的这一侧、一个在那一侧，像字母 Z（中间这一排可以是 2、3 或 4 个面）。':'';
+    const side={0:'一前一后',5:'一前一后',1:'一左一右',3:'一左一右',2:'一上一下',4:'一上一下'}[a];
     if(f===o){
       s2.right++;hl.tint[a]=TINT.good;hl.tint[f]=TINT.good;
-      setMsg('msg2','<b>对。</b>'+K(a)+' 和 '+K(f)+' 是相对面。'+whyText+'折起来看看，它们一个在前一个在后。','good');
+      setMsg('msg2','<b>对。</b>'+K(a)+' 和 '+K(f)+' 是相对面。'+whyText+'折起来看看：它们落在正方体相对的两侧（'+side+'），没有公共的棱。','good');
     }else{
       hl.tint[a]=TINT.sel;hl.tint[f]=TINT.bad;hl.tint[o]=TINT.good;
       setMsg('msg2','<b>不对。</b>'+K(a)+' 和 '+K(f)+' 折起来是<b>相邻</b>的，共用一条棱。'+K(a)+' 的相对面是 '+K(o)+'（绿色）。'+whyText,'bad');
@@ -657,7 +671,7 @@ $('showOpp').addEventListener('click',()=>{
   paintOpp();
   const lg=$('oppLegend');lg.hidden=!s2.showAll;
   lg.innerHTML=PAIR_NAME.map(([a,b,c])=>'<span><span class="sw" style="background:'+c+'"></span>'+L(a)+' ↔ '+L(b)+'</span>').join('');
-  setMsg('msg2',s2.showAll?'同一种颜色的两个面是相对面。数一数：它们在展开图里都不挨着。':'先点一个面。');
+  setMsg('msg2',s2.showAll?'同一种颜色的两个面是相对面。看一看：同色的两个面在展开图里都不挨着，连一个角都不碰。':'先点一个面。');
   redrawAll();
 });
 
@@ -681,12 +695,12 @@ function segOf(f,d){
 function edgeRelation(p){
   const a=segOf(p.f,p.d),b=segOf(p.g,p.dg);
   const share=a.some(P=>b.some(Q=>Math.abs(P[0]-Q[0])<1e-9&&Math.abs(P[1]-Q[1])<1e-9));
-  if(share)return '这两条边从同一个点出发，夹成一个直角，所以最先合上。';
+  if(share)return '这两条边从同一个点出发，中间夹着一个 90° 的空角。折的时候空角越来越小，折到 90° 时两条边贴在一起。这种最好认，先找它们。';
   if(p.d[0]===-p.dg[0]&&p.d[1]===-p.dg[1]){
     const sameLine=p.d[0]!==0?st.cell[p.f][1]===st.cell[p.g][1]:st.cell[p.f][0]===st.cell[p.g][0];
-    if(sameLine)return '这是一整行（或一整列）面卷成一圈后，首尾的两条外边。';
+    if(sameLine)return '这是一整排 4 个面卷成一圈后，首尾的两条外边。';
   }
-  return '这两条边在展开图里离得比较远，要等旁边的边先合上，它们才会碰到一起。';
+  return '这两条边在展开图里隔得比较远，折的时候慢慢靠近，也是折到 90° 才贴在一起。认这种的办法：两条边的两个端点分别是正方体上的同一个顶点（第 4 步），它们就重合。';
 }
 function paintEdges(){
   hl.edges={};
@@ -713,7 +727,7 @@ $('showEdges').addEventListener('click',()=>{
   s3.showAll=!s3.showAll;
   $('showEdges').classList.toggle('on',s3.showAll);$('showEdges').setAttribute('aria-pressed',String(s3.showAll));
   s3.pairs=s3.showAll?edgePairsAll():[];paintEdges();redrawAll();
-  setMsg('msg3',s3.showAll?'7 对重合边都标出来了，编号相同的两条边会粘在一起。先找夹成直角的那几对，再找首尾相接的。':'点外圈的一条边。');
+  setMsg('msg3',s3.showAll?'7 对重合边都标出来了，编号相同的两条边会粘在一起。找的顺序：① 夹成直角的那几对；② 如果有一整排 4 个面，这一排首尾的两条边；③ 剩下的看端点：两条边的两个端点分别是同一个顶点，它们就是一对。':'点外圈的一条边。');
 });
 $('clearEdges').addEventListener('click',()=>{s3.pairs=[];s3.showAll=false;$('showEdges').classList.remove('on');$('showEdges').setAttribute('aria-pressed','false');paintEdges();redrawAll();setMsg('msg3','点外圈的一条边。');});
 
@@ -740,7 +754,7 @@ function drawIso(cv,sl){
   const dpr=Math.min(window.devicePixelRatio||1,2),W=150;
   cv.width=W*dpr;cv.height=W*dpr;
   const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,W);
-  const s=W*0.52,ox=W/2,oy=W/2;
+  const s=W*0.47,ox=W/2,oy=W/2;
   const shade={Y:'#FFFFFF',Z:'#F1F2EE',X:'#E2E5E1'};
   for(const k of['Z','X','Y']){
     const w=SLOT_W[k],o=sl[k];
@@ -776,11 +790,11 @@ function answerQuiz(i){
     const b=$('opt'+j),w=b.querySelector('.why');
     b.classList.add(o.kind==='ok'?'right':'wrong');if(j===i)b.classList.add('picked');
     if(o.kind==='ok')w.textContent='能折成。';
-    else if(o.kind==='mirror')w.textContent='镜像：三个面都对，两两相邻也对，但转圈方向反了（它是 '+orderText(o.sl)+'，实际应为 '+orderText(good.sl)+'）。';
+    else if(o.kind==='mirror')w.textContent='位置反了（镜像摆法，字母本身没有反）：三个面选得对，但转圈方向变成 '+orderText(o.sl)+'，实际应为 '+orderText(good.sl)+'。';
     else if(o.kind==='opp')w.textContent=L(o.a)+' 和 '+L(o.b)+' 是相对面，不可能同时看到。';
-    else w.textContent=L(o.f)+' 面的朝向不对：三个面、转圈顺序都对，要查它的边挨着谁。';
+    else w.textContent=L(o.f)+' 的字母转了 90° 或 180°。三个面和转圈顺序都对，错在方向：'+L(o.f)+' 的字母头部应该朝着 '+L(faceByN.get(key(FACES[o.f].v)))+' 面，这里不是。';
   });
-  setMsg('msg5',(ok?'<b>对。</b>':'<b>不对。</b>正确的是 '+'ABCD'[s5.opts.findIndex(o=>o.kind==='ok')]+'。')+'看每个选项下面的说明：错误选项各破坏了一个不变量。顺时针指从外面看这个角，按“上 → 右 → 左前”读。',ok?'good':'bad');
+  setMsg('msg5',(ok?'<b>对。</b>':'<b>不对。</b>正确的是 '+'ABCD'[s5.opts.findIndex(o=>o.kind==='ok')]+'。')+'看每个选项下面的说明：每个错误选项只错在一个地方。“转圈方向”是从正方体外面看这个角，按“上 → 右 → 左前”的顺时针顺序读。',ok?'good':'bad');
   $('score5').textContent='对 '+s5.right+' / 共 '+s5.total;
 }
 function newQuiz(){s5.opts=makeQuiz();s5.answered=false;renderQuiz();setMsg('msg5','先自己判断，再点选项。');}
@@ -825,7 +839,7 @@ function step6Tap(f){
   }
   const cands=moveCandidates(f);s6.sel=f;s6.cands=cands;
   hl.ring=f;redrawAll();
-  cands.forEach((c,i)=>makeGhost(f,c,i));requestRender();
+  cands.forEach((c,i)=>makeGhost(f,c,i));updateCamera();
   const par=st.nb[f][0];
   setMsg('msg6',cands.length?K(f)+' 现在挂在 '+K(par)+' 上。它还能挪到 '+cands.length+' 个位置（半透明的格子），点一个试试。':K(f)+' 没有别的位置可以挪。');
 }
@@ -835,11 +849,13 @@ function onGhost(i){
   st={root:st.root===f?oldPar:st.root,nb:c.nb,cell:c.cell,Q:c.Q};
   const newA=angleOf(st,f);
   let deg=Math.round((newA-oldA)*180/Math.PI);deg=((deg%360)+540)%360-180;
-  const diag=Math.abs(oldCell[0]-st.cell[f][0])===1&&Math.abs(oldCell[1]-st.cell[f][1])===1;
+  const step1=Math.abs(oldCell[0]-st.cell[f][0])+Math.abs(oldCell[1]-st.cell[f][1])===1;
   clearGhosts();hl.ring=null;s6.sel=null;
   buildScene();markNetButtons(-1);
   const turn=deg===0?'没有转':deg>0?'逆时针转了 '+deg+'°':'顺时针转了 '+(-deg)+'°';
-  setMsg('msg6',K(f)+' 从挂在 '+K(oldPar)+' 上，改成挂在 '+K(c.g)+' 上。字母'+turn+'。'+(diag?'它是绕着 '+K(oldPar)+' 和 '+K(c.g)+' 的公共顶点转过去的。':'')+'现在折起来，看正方体和原来是不是一样。','good');
+  setMsg('msg6',K(f)+' 从挂在 '+K(oldPar)+' 上，改成挂在 '+K(c.g)+' 上，字母'+turn+'。'
+    +(step1?'它是绕着 '+K(f)+'、'+K(oldPar)+'、'+K(c.g)+' 三个面共用的那个顶点（旧格子和新格子共用的那个角）转了 90°。':'')
+    +'<br>道理：'+K(f)+' 原来有一条外边要和 '+K(c.g)+' 粘在一起（第 3 步的重合边）。挪过去，就是先把这一对粘上，再把 '+K(f)+' 和 '+K(oldPar)+' 之间的边剪开。字母跟着面一起转，所以挪过去以后，这条边正好贴着 '+K(c.g)+'。<br>现在折起来，看得到的正方体和原来是不是一样。','good');
 }
 $('restoreNet').addEventListener('click',()=>{clearGhosts();loadNet(netIndex);setMsg('msg6','已恢复。点一个最外面的面。');});
 
@@ -859,7 +875,7 @@ playBtn.addEventListener('click',()=>{
   const from=fold,to=fold>=45?0:90;
   const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const dur=reduce?1:1600,t0=performance.now();
-  if(to===90)clearGhosts();
+  if(to===90&&s6.sel!=null){clearGhosts();s6.sel=null;hl.ring=null;redrawAll();setMsg('msg6','点一个最外面的面。');}
   anim={};const me=anim;
   (function tick(now){
     if(anim!==me)return;
