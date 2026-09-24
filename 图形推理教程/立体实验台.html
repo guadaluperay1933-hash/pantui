@@ -1,0 +1,929 @@
+<title>立体图推实验台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&display=swap">
+<style>
+:root{
+  --bg:#F1F4F3;
+  --panel:#FFFFFF;
+  --ink:#1C2329;
+  --muted:#5A6870;
+  --line:#D5DDDB;
+  --accent:#0E6B64;
+  --accent-soft:#DCEDEA;
+  --stage:#E3E9E8;
+  --good:#2F7D46;
+  --good-soft:#DCEFDF;
+  --bad:#B23A48;
+  --bad-soft:#F6DEE0;
+  --chip:#EEF2F1;
+  --serif:"Noto Serif SC","Songti SC","STSong",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans SC","Microsoft YaHei","Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#101517;--panel:#182023;--ink:#E5ECEA;--muted:#9AA9AD;--line:#2B373A;
+    --accent:#58C2B6;--accent-soft:#17312E;--stage:#0B1012;--good:#6BC287;--good-soft:#16301F;
+    --bad:#EE8490;--bad-soft:#3A1C21;--chip:#1F292C;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#101517;--panel:#182023;--ink:#E5ECEA;--muted:#9AA9AD;--line:#2B373A;
+  --accent:#58C2B6;--accent-soft:#17312E;--stage:#0B1012;--good:#6BC287;--good-soft:#16301F;
+  --bad:#EE8490;--bad-soft:#3A1C21;--chip:#1F292C;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.65}
+.app{max-width:1280px;margin:0 auto;padding-inline:16px;padding-block:18px 32px;display:flex;flex-direction:column;gap:16px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px 16px}
+h1{font-family:var(--serif);font-weight:700;font-size:1.45rem;margin:0;letter-spacing:.02em;text-wrap:balance}
+.lesson{color:var(--muted);font-size:.9rem}
+.layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)}}
+.stage-col{display:flex;flex-direction:column;gap:10px;min-width:0}
+.stage{position:relative;background:var(--stage);border-radius:10px;overflow:hidden;aspect-ratio:4/3;max-height:72vh;width:100%}
+@media (max-width:600px){.stage{aspect-ratio:1/1}}
+.stage canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+.stage canvas:active{cursor:grabbing}
+.hud{position:absolute;left:10px;bottom:8px;font-size:.78rem;color:var(--muted);pointer-events:none}
+.view-btns{position:absolute;right:8px;top:8px;display:flex;gap:6px}
+button{font:inherit;color:inherit}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:7px;padding:5px 12px;cursor:pointer;font-size:.86rem;line-height:1.4}
+.btn:hover{border-color:var(--accent)}
+.btn:focus-visible,.net-btn:focus-visible,.step-btn:focus-visible,.opt:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--panel)}
+.btn.on{background:var(--accent-soft);border-color:var(--accent)}
+.fold-bar{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
+.fold-bar label{font-size:.86rem;color:var(--muted);white-space:nowrap}
+.fold-bar input{flex:1;min-width:0;accent-color:var(--accent)}
+.fold-bar output{font-variant-numeric:tabular-nums;width:3.2em;text-align:right;font-size:.9rem}
+.nets{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.nets-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.nets-head b{font-size:.9rem}
+.nets-head span{font-size:.8rem;color:var(--muted)}
+.net-groups{display:flex;flex-wrap:wrap;gap:10px 18px}
+.net-group{display:flex;flex-direction:column;gap:4px}
+.net-group small{font-size:.74rem;color:var(--muted);letter-spacing:.04em}
+.net-row{display:flex;flex-wrap:wrap;gap:6px}
+.net-btn{border:1px solid var(--line);background:var(--chip);border-radius:6px;padding:4px;cursor:pointer;line-height:0}
+.net-btn[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.net-btn svg rect{fill:var(--panel);stroke:var(--ink);stroke-width:1.2}
+.net-btn[aria-pressed="true"] svg rect{stroke:var(--accent)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px 18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.step-btn{border:1px solid var(--line);background:var(--chip);border-radius:7px;padding:6px 8px;cursor:pointer;text-align:left;font-size:.84rem;line-height:1.35;display:flex;gap:6px;align-items:baseline}
+.step-btn i{font-style:normal;font-variant-numeric:tabular-nums;color:var(--muted);font-size:.78rem}
+.step-btn[aria-selected="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.step-btn[aria-selected="true"] i{color:var(--accent)}
+.step h2{font-family:var(--serif);font-weight:600;font-size:1.15rem;margin:0 0 4px}
+.step{display:flex;flex-direction:column;gap:10px}
+.step p{margin:0}
+.todo{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:3px}
+.todo li::marker{color:var(--accent);font-variant-numeric:tabular-nums}
+.note{font-size:.86rem;color:var(--muted);border-top:1px dashed var(--line);padding-top:8px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.msg{background:var(--chip);border-radius:8px;padding:10px 12px;font-size:.92rem;min-height:3.2em}
+.msg.good{background:var(--good-soft)}
+.msg.bad{background:var(--bad-soft)}
+.msg b{font-weight:650}
+.score{font-size:.84rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.kbd{display:inline-block;min-width:1.5em;text-align:center;border:1px solid var(--line);border-radius:4px;padding:0 4px;font-weight:700;background:var(--panel);font-family:var(--sans)}
+.opts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media (max-width:1100px) and (min-width:901px){.opts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:480px){.opts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.opt{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:left}
+.opt canvas{width:100%;max-width:150px;aspect-ratio:1/1;height:auto;display:block}
+.opt .tag{font-weight:700;font-size:.9rem}
+.opt .why{font-size:.78rem;line-height:1.45;color:var(--muted);align-self:stretch}
+.opt.right{border-color:var(--good);background:var(--good-soft)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.opt.picked{outline:2px solid var(--ink);outline-offset:1px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:.84rem}
+.sw{display:inline-block;width:.9em;height:.9em;border-radius:3px;vertical-align:-1px;margin-right:4px;border:1px solid rgba(0,0,0,.25)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+<div class="app">
+  <header>
+    <h1>立体图推实验台</h1>
+    <div class="lesson">第一课 · 正方体展开图</div>
+  </header>
+
+  <div class="layout">
+    <section class="stage-col" aria-label="三维展示区">
+      <div class="stage" id="stage">
+        <canvas id="gl" aria-label="正方体展开图三维视图，可拖动旋转"></canvas>
+        <div class="view-btns">
+          <button class="btn" id="frontView" type="button">正对展开图</button>
+          <button class="btn" id="resetView" type="button">斜着看</button>
+        </div>
+        <div class="hud" id="hud">单指拖动：旋转 · 双指或滚轮：缩放 · 轻点：选面</div>
+      </div>
+      <div class="fold-bar">
+        <button class="btn primary" id="playBtn" type="button">折起来</button>
+        <label for="fold">折叠角度</label>
+        <input id="fold" type="range" min="0" max="90" step="1" value="0">
+        <output id="foldOut" for="fold">0°</output>
+      </div>
+      <div class="nets">
+        <div class="nets-head"><b>换一个展开图</b><span>正方体一共 11 种展开图</span></div>
+        <div class="net-groups" id="netGroups"></div>
+      </div>
+    </section>
+
+    <aside class="panel" aria-label="步骤与操作">
+      <nav class="steps" role="tablist" id="steps">
+        <button class="step-btn" role="tab" data-step="1" type="button"><i>1</i>折起来看</button>
+        <button class="step-btn" role="tab" data-step="2" type="button"><i>2</i>相对面</button>
+        <button class="step-btn" role="tab" data-step="3" type="button"><i>3</i>重合边</button>
+        <button class="step-btn" role="tab" data-step="4" type="button"><i>4</i>同一个顶点</button>
+        <button class="step-btn" role="tab" data-step="5" type="button"><i>5</i>转圈方向</button>
+        <button class="step-btn" role="tab" data-step="6" type="button"><i>6</i>移动面</button>
+      </nav>
+
+      <div class="step" data-body="1" role="tabpanel">
+        <h2>折起来看</h2>
+        <ol class="todo">
+          <li>在左下方选一个展开图。</li>
+          <li>慢慢拖“折叠角度”，从 0° 拖到 90°。</li>
+          <li>只盯住一个字母，看它最后落在正方体的哪一面。</li>
+          <li>折好以后，拖动画面转一圈，看看每个字母的朝向。</li>
+        </ol>
+        <p class="note">展开图画的是正方体的<b>外表面</b>，所以字母在外面。灰色的一面是盒子的里面。中间有一个面始终不动，其余的面都绕着自己和邻居之间的那条边往后折。</p>
+      </div>
+
+      <div class="step" data-body="2" role="tabpanel" hidden>
+        <h2>相对面</h2>
+        <ol class="todo">
+          <li>先点一个面。</li>
+          <li>再点你认为和它<b>相对</b>的面（折好后正对着它、不挨着的那个面）。</li>
+          <li>看判断结果，然后折起来验证。</li>
+        </ol>
+        <div class="msg" id="msg2" aria-live="polite">先点一个面。</div>
+        <div class="row">
+          <button class="btn" id="showOpp" type="button" aria-pressed="false">显示全部相对面</button>
+          <span class="score" id="score2">对 0 / 共 0</span>
+        </div>
+        <div class="legend" id="oppLegend" hidden></div>
+        <p class="note">换几个展开图多试几次，尤其是 2-3-1 型、2-2-2 型和 3-3 型。</p>
+      </div>
+
+      <div class="step" data-body="3" role="tabpanel" hidden>
+        <h2>重合边</h2>
+        <ol class="todo">
+          <li>点展开图<b>最外圈</b>的一条边（点在格子里靠近这条边的地方）。</li>
+          <li>折起来以后会和它粘在一起的那条边，会用同一种颜色、同一个编号标出来。</li>
+          <li>慢慢拖“折叠角度”，看这两条边怎么合上。</li>
+        </ol>
+        <div class="msg" id="msg3" aria-live="polite">点外圈的一条边。</div>
+        <div class="row">
+          <button class="btn" id="showEdges" type="button" aria-pressed="false">显示全部 7 对</button>
+          <button class="btn" id="clearEdges" type="button">清除</button>
+        </div>
+        <p class="note">为什么正好 7 对：正方体有 12 条棱。展开图里，面和面连着的地方有 5 条，这 5 条没有剪开。剩下 7 条被剪开了，每条都变成外圈上的两条边，所以外圈一共 14 条边，正好配成 7 对。</p>
+      </div>
+
+      <div class="step" data-body="4" role="tabpanel" hidden>
+        <h2>同一个顶点</h2>
+        <ol class="todo">
+          <li>点某个格子的一个角（点在格子里靠近这个角的地方）。</li>
+          <li>正方体上的同一个顶点，在展开图里出现在哪几个位置，都会标上红点。</li>
+          <li>折起来看，这几个红点最后都会汇到正方体的同一个角上。</li>
+        </ol>
+        <div class="msg" id="msg4" aria-live="polite">点一个格子的角。</div>
+        <p class="note">正方体的每个顶点都连着 3 个面。展开以后，这 3 个面不一定挨在一起，所以同一个顶点可能在展开图里出现 1 到 3 次。</p>
+      </div>
+
+      <div class="step" data-body="5" role="tabpanel" hidden>
+        <h2>转圈方向</h2>
+        <p>左边的展开图能折成下面哪一个？</p>
+        <div class="opts" id="opts"></div>
+        <div class="msg" id="msg5" aria-live="polite">先自己判断，再点选项。</div>
+        <div class="row"><button class="btn" id="newQuiz" type="button">换一题</button><span class="score" id="score5">对 0 / 共 0</span></div>
+        <p class="note">这 4 个选项里，只有一个是对的。其他 3 个分别用了出题人最常用的 3 种造错方法。答完以后，把展开图折起来，转到和选项一样的角度对照。</p>
+      </div>
+
+      <div class="step" data-body="6" role="tabpanel" hidden>
+        <h2>移动面</h2>
+        <ol class="todo">
+          <li>点一个只挂在一条边上的面（最外面的面）。</li>
+          <li>它能挪去的位置会出现半透明的格子。点其中一个，面就挪过去。</li>
+          <li>注意看：挪过去以后，面上的字母转了多少度。</li>
+          <li>挪完以后再折起来，看得到的正方体有没有变。</li>
+        </ol>
+        <div class="msg" id="msg6" aria-live="polite">点一个最外面的面。</div>
+        <div class="row"><button class="btn" id="restoreNet" type="button">恢复原来的展开图</button></div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+'use strict';
+
+/* ================= 几何：纯整数计算，不依赖三维库 ================= */
+const DIRS=[[1,0],[-1,0],[0,1],[0,-1]];
+const key=a=>a.join(',');
+const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+const neg=a=>a.map(x=>-x);
+const add=(a,b)=>a.map((x,i)=>x+b[i]);
+const mulMV=(M,v)=>[dot(M[0],v),dot(M[1],v),dot(M[2],v)];
+const tr=M=>[0,1,2].map(i=>[0,1,2].map(j=>M[j][i]));
+const mulMM=(A,B)=>[0,1,2].map(i=>[0,1,2].map(j=>A[i][0]*B[0][j]+A[i][1]*B[1][j]+A[i][2]*B[2][j]));
+const I3=[[1,0,0],[0,1,0],[0,0,1]];
+const det=M=>M[0][0]*(M[1][1]*M[2][2]-M[1][2]*M[2][1])-M[0][1]*(M[1][0]*M[2][2]-M[1][2]*M[2][0])+M[0][2]*(M[1][0]*M[2][1]-M[1][1]*M[2][0]);
+
+// 正方体的 6 个面：n 外法向，u 图案的“右”，v 图案的“上”，u×v=n
+const FACES=[
+  {n:[0,0,1], u:[1,0,0], v:[0,1,0], label:'F'},
+  {n:[1,0,0], u:[0,0,-1],v:[0,1,0], label:'R'},
+  {n:[0,1,0], u:[1,0,0], v:[0,0,-1],label:'P'},
+  {n:[-1,0,0],u:[0,0,1], v:[0,1,0], label:'L'},
+  {n:[0,-1,0],u:[1,0,0], v:[0,0,1], label:'J'},
+  {n:[0,0,-1],u:[-1,0,0],v:[0,1,0], label:'G'},
+];
+const faceByN=new Map(FACES.map((f,i)=>[key(f.n),i]));
+const opposite=f=>faceByN.get(key(neg(FACES[f].n)));
+const L=f=>FACES[f].label;
+
+// 把面 c 沿着它和面 p 的公共棱摊平到 p 所在平面的旋转
+function unfoldM(nP,nC){
+  const e=cross(nP,nC), M=[[0,0,0],[0,0,0],[0,0,0]];
+  for(let i=0;i<3;i++)for(let j=0;j<3;j++)M[i][j]=nP[i]*nC[j]-nC[i]*nP[j]+e[i]*e[j];
+  return M;
+}
+
+// 11 种展开图（列, 行），行向下增加
+const NET_GROUPS=[
+  {name:'1-4-1 型',nets:[[0,0],[0,1],[0,2],[0,3],[1,1],[1,2]].map(([a,b])=>[[a,0],[0,1],[1,1],[2,1],[3,1],[b,2]])},
+  {name:'2-3-1 型',nets:[1,2,3].map(c=>[[0,0],[1,0],[1,1],[2,1],[3,1],[c,2]])},
+  {name:'2-2-2 型',nets:[[[0,0],[1,0],[1,1],[2,1],[2,2],[3,2]]]},
+  {name:'3-3 型',nets:[[[0,0],[1,0],[2,0],[2,1],[3,1],[4,1]]]},
+];
+const NETS=NET_GROUPS.flatMap(g=>g.nets);
+const DEFAULT_NET=4; // 十字形
+
+// 由格子生成：根面固定为 F，按公共边一格一格推出其他面是谁、朝向如何
+function fromCells(cells){
+  const pos=cells.map(([c,r])=>[c,-r]);
+  const idxAt=new Map(pos.map((p,i)=>[key(p),i]));
+  const deg=pos.map(p=>DIRS.filter(d=>idxAt.has(key([p[0]+d[0],p[1]+d[1]]))).length);
+  const xs=pos.map(p=>p[0]),ys=pos.map(p=>p[1]);
+  const cx=(Math.min(...xs)+Math.max(...xs))/2, cy=(Math.min(...ys)+Math.max(...ys))/2;
+  let rootIdx=0;
+  pos.forEach((p,i)=>{
+    const a=deg[i],b=deg[rootIdx];
+    const da=Math.hypot(p[0]-cx,p[1]-cy),db=Math.hypot(pos[rootIdx][0]-cx,pos[rootIdx][1]-cy);
+    if(a>b||(a===b&&da<db-1e-9))rootIdx=i;
+  });
+  const st={root:0,nb:[[],[],[],[],[],[]],cell:[],Q:[]};
+  const faceAt=new Map([[rootIdx,0]]);
+  st.cell[0]=pos[rootIdx];st.Q[0]=I3;
+  const q=[rootIdx];
+  while(q.length){
+    const i=q.shift(),fp=faceAt.get(i);
+    for(const d of DIRS){
+      const j=idxAt.get(key([pos[i][0]+d[0],pos[i][1]+d[1]]));
+      if(j===undefined||faceAt.has(j))continue;
+      const nC=mulMV(tr(st.Q[fp]),[d[0],d[1],0]);
+      const fc=faceByN.get(key(nC));
+      faceAt.set(j,fc);st.cell[fc]=pos[j];
+      st.Q[fc]=mulMM(st.Q[fp],unfoldM(FACES[fp].n,nC));
+      st.nb[fp].push(fc);st.nb[fc].push(fp);q.push(j);
+    }
+  }
+  return st;
+}
+
+// 给定连接关系（树），从 anchor 面出发重新排布
+function relayout(nb,anchor,cell0,Q0){
+  const cell=[],Q=[];cell[anchor]=cell0;Q[anchor]=Q0;
+  const seen=new Set([anchor]),q=[anchor];
+  while(q.length){
+    const p=q.shift();
+    for(const c of nb[p]){
+      if(seen.has(c))continue;seen.add(c);
+      const d=mulMV(Q[p],FACES[c].n);
+      cell[c]=[cell[p][0]+d[0],cell[p][1]+d[1]];
+      Q[c]=mulMM(Q[p],unfoldM(FACES[p].n,FACES[c].n));
+      q.push(c);
+    }
+  }
+  if(seen.size!==6)return null;
+  if(new Set(cell.map(key)).size!==6)return null;
+  return {cell,Q};
+}
+
+const angleOf=(st,f)=>{const u=mulMV(st.Q[f],FACES[f].u);return Math.atan2(u[1],u[0]);};
+const cellAt=(st,x,y)=>{for(let f=0;f<6;f++)if(st.cell[f][0]===x&&st.cell[f][1]===y)return f;return -1;};
+
+// 某个面某条边（净平面里的方向 d）连着哪个面
+const edgeTarget=(st,f,d)=>faceByN.get(key(mulMV(tr(st.Q[f]),[d[0],d[1],0])));
+// 面 g 上与面 f 共用的那条边，在净平面里的方向
+const edgeDirToward=(st,g,f)=>{const v=mulMV(st.Q[g],FACES[f].n);return [v[0],v[1]];};
+const isHinge=(st,f,d)=>cellAt(st,st.cell[f][0]+d[0],st.cell[f][1]+d[1])>=0;
+// 某个面某个角（sx,sy）对应的正方体顶点
+const vertexKey=(st,f,sx,sy)=>key(add(FACES[f].n,mulMV(tr(st.Q[f]),[sx,sy,0])));
+
+// 绕一个顶点，从外面看顺时针的三个面
+function clockwiseAt(vk){
+  const s=vk.split(',').map(Number);
+  const fs=[0,1,2].map(i=>{const n=[0,0,0];n[i]=s[i];return faceByN.get(key(n));});
+  const [a,b,c]=fs;
+  return dot(cross(FACES[a].n,FACES[b].n),FACES[c].n)>0?[a,c,b]:[a,b,c];
+}
+
+// 两个相对面在展开图里的位置关系
+function treePath(st,a,b){
+  const prev=new Map([[a,-1]]),q=[a];
+  while(q.length){const p=q.shift();for(const c of st.nb[p])if(!prev.has(c)){prev.set(c,p);q.push(c);}}
+  const path=[];for(let x=b;x!==-1;x=prev.get(x))path.unshift(x);
+  return path;
+}
+function oppositeReason(st,a,b){
+  const path=treePath(st,a,b);
+  const dirs=[];for(let i=1;i<path.length;i++)dirs.push([st.cell[path[i]][0]-st.cell[path[i-1]][0],st.cell[path[i]][1]-st.cell[path[i-1]][1]]);
+  const same=(p,q)=>p[0]===q[0]&&p[1]===q[1];
+  if(dirs.length===2&&same(dirs[0],dirs[1]))return 'line';
+  if(dirs.length>=3&&same(dirs[0],dirs[dirs.length-1])){
+    const mid=dirs.slice(1,-1);
+    if(mid.every(m=>same(m,mid[0]))&&dot([...mid[0],0],[...dirs[0],0])===0)return 'z';
+  }
+  return 'other';
+}
+
+// 24 个旋转
+const ROTS=(()=>{
+  const out=[],P=[[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]];
+  for(const p of P)for(const sx of[1,-1])for(const sy of[1,-1])for(const sz of[1,-1]){
+    const M=[[0,0,0],[0,0,0],[0,0,0]];M[0][p[0]]=sx;M[1][p[1]]=sy;M[2][p[2]]=sz;
+    if(det(M)===1)out.push(M);
+  }
+  return out;
+})();
+const SLOT_W={X:[1,0,0],Y:[0,1,0],Z:[0,0,1]};
+function viewFromRot(R){
+  const slots={};
+  for(const s of['X','Y','Z']){
+    const f=faceByN.get(key(mulMV(tr(R),SLOT_W[s])));
+    slots[s]={f,U:mulMV(R,FACES[f].u),V:mulMV(R,FACES[f].v)};
+  }
+  return slots;
+}
+function realizable(slots){
+  return ROTS.some(R=>['X','Y','Z'].every(s=>{
+    const o=slots[s];
+    return key(mulMV(R,FACES[o.f].n))===key(SLOT_W[s])&&key(mulMV(R,FACES[o.f].u))===key(o.U)&&key(mulMV(R,FACES[o.f].v))===key(o.V);
+  }));
+}
+const viewKey=sl=>['X','Y','Z'].map(s=>sl[s].f+':'+key(sl[s].U)+':'+key(sl[s].V)).join('|');
+const inPlaneDirs=w=>[[1,0,0],[0,1,0],[0,0,1],[-1,0,0],[0,-1,0],[0,0,-1]].filter(d=>dot(d,w)===0);
+// 顺时针（从 (1,1,1) 方向看）：上 → 右 → 前
+const VIEW_ORDER=['Y','X','Z'];
+
+let rngState=20260924;
+const rnd=n=>{rngState=(rngState*1103515245+12345)&0x7fffffff;return rngState%n;};
+const pick=a=>a[rnd(a.length)];
+
+function makeQuiz(){
+  for(let tries=0;tries<200;tries++){
+    const R=pick(ROTS);
+    const ok=viewFromRot(R);
+    // 镜像：沿 x=z 平面翻过来，每个面的图案本身不翻
+    const S=v=>[v[2],v[1],v[0]];
+    const mir={};
+    for(const s of['X','Y','Z']){
+      const src=ok[s==='X'?'Z':s==='Z'?'X':'Y'];
+      mir[s]={f:src.f,U:neg(S(src.U)),V:S(src.V)};
+    }
+    // 相对面同时出现
+    const slots=['X','Y','Z'];
+    const k=pick(slots),j=pick(slots.filter(s=>s!==k));
+    const opp=JSON.parse(JSON.stringify(ok));
+    {const U=pick(inPlaneDirs(SLOT_W[k]));opp[k]={f:opposite(ok[j].f),U,V:cross(SLOT_W[k],U)};}
+    // 一个面转错方向
+    const k2=pick(slots);
+    const rot=JSON.parse(JSON.stringify(ok));
+    {const cur=ok[k2].U;const cands=inPlaneDirs(SLOT_W[k2]).filter(d=>key(d)!==key(cur));const U=pick(cands);rot[k2]={f:ok[k2].f,U,V:cross(SLOT_W[k2],U)};}
+    const opts=[{kind:'ok',sl:ok},{kind:'mirror',sl:mir},{kind:'opp',sl:opp,a:ok[j].f,b:opp[k].f},{kind:'rot',sl:rot,f:ok[k2].f}];
+    const keys=new Set(opts.map(o=>viewKey(o.sl)));
+    if(keys.size!==4)continue;
+    if(!realizable(ok))continue;
+    if(opts.slice(1).some(o=>realizable(o.sl)))continue;
+    for(let i=opts.length-1;i>0;i--){const t=rnd(i+1);[opts[i],opts[t]]=[opts[t],opts[i]];}
+    return opts;
+  }
+  return null;
+}
+
+/* ================= 画面内容 ================= */
+const INK='#1D2327';
+const PAIR_TINT={0:'#CBE6E1',5:'#CBE6E1',1:'#F4DDB0',3:'#F4DDB0',2:'#EACDE0',4:'#EACDE0'};
+const PAIR_NAME=[[0,5,'#CBE6E1'],[1,3,'#F4DDB0'],[2,4,'#EACDE0']];
+const EDGE_COLORS=['#D1495B','#2E86AB','#E0A030','#3F8F5B','#7B5EA7','#E07A2F','#159A8C'];
+const TINT={sel:'#BFE2DC',good:'#C6E8C9',bad:'#F3C6C2',paper:'#FBFBF8'};
+
+function drawLetter(g,f,S){
+  g.fillStyle=INK;
+  g.font='700 '+Math.round(S*0.58)+'px "Helvetica Neue",Arial,sans-serif';
+  g.textAlign='center';g.textBaseline='middle';
+  g.fillText(L(f),0,S*0.03);
+}
+
+/* ================= 三维场景 ================= */
+const canvas=document.getElementById('gl');
+const stageEl=document.getElementById('stage');
+if(!window.THREE){
+  document.getElementById('hud').textContent='三维库没有加载成功，请刷新页面。';
+  return;
+}
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(32,1,0.1,200);
+scene.add(camera);
+scene.add(new THREE.HemisphereLight(0xffffff,0x9aa6ad,0.72));
+const sun=new THREE.DirectionalLight(0xffffff,0.5);sun.position.set(2.5,3,4);camera.add(sun);
+
+const PLANE=new THREE.PlaneGeometry(1,1);
+const TEX=256;
+const faces=[];
+for(let f=0;f<6;f++){
+  const c=document.createElement('canvas');c.width=c.height=TEX;
+  const tex=new THREE.CanvasTexture(c);tex.anisotropy=4;
+  const front=new THREE.Mesh(PLANE,new THREE.MeshLambertMaterial({map:tex}));
+  front.userData={kind:'face',f};
+  const back=new THREE.Mesh(PLANE,new THREE.MeshLambertMaterial({color:0xaab4b8}));
+  back.rotation.y=Math.PI;back.position.z=-0.002;
+  const frame=new THREE.Group();frame.add(front,back);
+  faces.push({canvas:c,tex,front,frame,hinge:null,axis:null});
+}
+const netGroup=new THREE.Group();scene.add(netGroup);
+const ghostGroup=new THREE.Group();scene.add(ghostGroup);
+
+let st=null, netIndex=DEFAULT_NET, fold=0;
+const hl={tint:{},edges:{},dots:{},ring:null};
+function clearHl(){hl.tint={};hl.edges={};hl.dots={};hl.ring=null;}
+
+function drawFace(f){
+  const F=faces[f],g=F.canvas.getContext('2d'),S=TEX;
+  g.setTransform(1,0,0,1,0,0);
+  g.fillStyle=hl.tint[f]||TINT.paper;g.fillRect(0,0,S,S);
+  g.save();g.translate(S/2,S/2);g.rotate(-angleOf(st,f));drawLetter(g,f,S);g.restore();
+  // 边上的标记（在净平面坐标里：右、左、上、下）
+  const E=hl.edges[f]||{};
+  for(const dk in E){
+    const [dx,dy]=dk.split(',').map(Number),{color,num}=E[dk],w=24;
+    g.fillStyle=color;
+    let bx,by,lx,ly;
+    if(dx===1){g.fillRect(S-w,0,w,S);lx=S-w-26;ly=S/2;}
+    else if(dx===-1){g.fillRect(0,0,w,S);lx=w+26;ly=S/2;}
+    else if(dy===1){g.fillRect(0,0,S,w);lx=S/2;ly=w+26;}
+    else {g.fillRect(0,S-w,S,w);lx=S/2;ly=S-w-26;}
+    if(num!=null){
+      g.beginPath();g.arc(lx,ly,21,0,Math.PI*2);g.fillStyle=color;g.fill();
+      g.fillStyle='#fff';g.font='700 26px Arial,sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(String(num),lx,ly+1);
+    }
+  }
+  g.lineWidth=6;g.strokeStyle=INK;g.strokeRect(3,3,S-6,S-6);
+  const D=hl.dots[f]||{};
+  for(const ck in D){
+    const [sx,sy]=ck.split(',').map(Number);
+    const x=sx>0?S-36:36,y=sy>0?36:S-36;
+    g.beginPath();g.arc(x,y,20,0,Math.PI*2);g.fillStyle='#fff';g.fill();
+    g.beginPath();g.arc(x,y,15,0,Math.PI*2);g.fillStyle=D[ck];g.fill();
+  }
+  if(hl.ring===f){g.lineWidth=14;g.strokeStyle='#0E6B64';g.strokeRect(12,12,S-24,S-24);}
+  F.tex.needsUpdate=true;
+}
+function redrawAll(){for(let f=0;f<6;f++)drawFace(f);requestRender();}
+
+function buildScene(){
+  for(const F of faces){if(F.frame.parent)F.frame.parent.remove(F.frame);F.frame.position.set(0,0,0);F.frame.quaternion.identity();}
+  while(netGroup.children.length)netGroup.remove(netGroup.children[0]);
+  const root=st.root,rf=faces[root].frame;
+  rf.position.set(st.cell[root][0],st.cell[root][1],0);netGroup.add(rf);
+  faces[root].hinge=null;
+  const seen=new Set([root]),q=[root];
+  while(q.length){
+    const p=q.shift();
+    for(const c of st.nb[p]){
+      if(seen.has(c))continue;seen.add(c);
+      const d=[st.cell[c][0]-st.cell[p][0],st.cell[c][1]-st.cell[p][1]];
+      const h=new THREE.Group();h.position.set(d[0]*0.5,d[1]*0.5,0);
+      faces[c].frame.position.set(d[0]*0.5,d[1]*0.5,0);
+      h.add(faces[c].frame);faces[p].frame.add(h);
+      faces[c].hinge=h;faces[c].axis=new THREE.Vector3(-d[1],d[0],0);
+      q.push(c);
+    }
+  }
+  applyFold();redrawAll();fitCamera();
+}
+function applyFold(){
+  const a=fold*Math.PI/180;
+  for(let f=0;f<6;f++)if(faces[f].hinge)faces[f].hinge.quaternion.setFromAxisAngle(faces[f].axis,a);
+  ghostGroup.visible=fold===0;
+  updateCamera();requestRender();
+}
+
+/* ---------- 相机 ---------- */
+const orbit={theta:0.32,phi:1.28,zoom:1};
+const DEFAULT_ORBIT={theta:0.32,phi:1.28};
+function netBox(){
+  const xs=st.cell.map(c=>c[0]),ys=st.cell.map(c=>c[1]);
+  return {cx:(Math.min(...xs)+Math.max(...xs))/2,cy:(Math.min(...ys)+Math.max(...ys))/2,w:Math.max(...xs)-Math.min(...xs)+1,h:Math.max(...ys)-Math.min(...ys)+1};
+}
+function fitDist(radius){
+  const vf=camera.fov*Math.PI/180;
+  const hf=2*Math.atan(Math.tan(vf/2)*camera.aspect);
+  return radius/Math.sin(Math.min(vf,hf)/2)*1.02;
+}
+function updateCamera(){
+  if(!st)return;
+  const t=fold/90,b=netBox();
+  const flatT=new THREE.Vector3(b.cx,b.cy,0),cubeT=new THREE.Vector3(st.cell[st.root][0],st.cell[st.root][1],-0.5);
+  const target=flatT.lerp(cubeT,t);
+  const r0=0.5*Math.hypot(b.w,b.h),r1=0.95;
+  const dist=fitDist(r0+(r1-r0)*t)*orbit.zoom;
+  const {theta,phi}=orbit;
+  camera.position.set(target.x+dist*Math.sin(phi)*Math.sin(theta),target.y+dist*Math.cos(phi),target.z+dist*Math.sin(phi)*Math.cos(theta));
+  camera.lookAt(target);
+  requestRender();
+}
+function fitCamera(){orbit.zoom=1;updateCamera();}
+
+let dirty=true;
+function requestRender(){dirty=true;}
+function loop(){if(dirty){dirty=false;renderer.render(scene,camera);}requestAnimationFrame(loop);}
+function resize(){
+  const r=stageEl.getBoundingClientRect();
+  renderer.setSize(r.width,r.height,false);
+  camera.aspect=r.width/Math.max(1,r.height);camera.updateProjectionMatrix();
+  updateCamera();
+}
+new ResizeObserver(resize).observe(stageEl);
+
+/* ---------- 拖动、缩放、轻点 ---------- */
+const pointers=new Map();let down=null,pinch=null;
+canvas.addEventListener('pointerdown',e=>{
+  canvas.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pointers.size===1)down={x:e.clientX,y:e.clientY,t:performance.now(),moved:false};
+  else if(pointers.size===2){const [a,b]=[...pointers.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y),z:orbit.zoom};if(down)down.moved=true;}
+});
+canvas.addEventListener('pointermove',e=>{
+  if(!pointers.has(e.pointerId))return;
+  const p=pointers.get(e.pointerId),dx=e.clientX-p.x,dy=e.clientY-p.y;
+  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pointers.size===1&&down){
+    if(Math.hypot(e.clientX-down.x,e.clientY-down.y)>6)down.moved=true;
+    if(down.moved){
+      orbit.theta-=dx*0.009;
+      orbit.phi=Math.min(Math.PI-0.12,Math.max(0.12,orbit.phi-dy*0.009));
+      updateCamera();
+    }
+  }else if(pointers.size===2&&pinch){
+    const [a,b]=[...pointers.values()];
+    orbit.zoom=Math.min(3,Math.max(0.45,pinch.z*pinch.d/Math.max(1,Math.hypot(a.x-b.x,a.y-b.y))));
+    updateCamera();
+  }
+});
+function endPointer(e){
+  if(pointers.size===1&&down&&!down.moved&&performance.now()-down.t<700)handleTap(e.clientX,e.clientY);
+  pointers.delete(e.pointerId);
+  if(pointers.size<2)pinch=null;
+  if(pointers.size===0)down=null;
+}
+canvas.addEventListener('pointerup',endPointer);
+canvas.addEventListener('pointercancel',e=>{pointers.delete(e.pointerId);if(pointers.size===0)down=null;pinch=null;});
+canvas.addEventListener('wheel',e=>{e.preventDefault();orbit.zoom=Math.min(3,Math.max(0.45,orbit.zoom*Math.exp(e.deltaY*0.0012)));updateCamera();},{passive:false});
+
+const ray=new THREE.Raycaster();
+function handleTap(x,y){
+  const r=canvas.getBoundingClientRect();
+  ray.setFromCamera(new THREE.Vector2((x-r.left)/r.width*2-1,-(y-r.top)/r.height*2+1),camera);
+  const targets=faces.map(F=>F.front).concat(ghostGroup.visible?ghostGroup.children:[]);
+  const hit=ray.intersectObjects(targets,false)[0];
+  if(!hit)return;
+  const ud=hit.object.userData;
+  if(ud.kind==='ghost'){onGhost(ud.idx);return;}
+  const local=faces[ud.f].frame.worldToLocal(hit.point.clone());
+  onFaceTap(ud.f,local.x,local.y);
+}
+
+/* ================= 步骤逻辑 ================= */
+let step=1;
+const $=id=>document.getElementById(id);
+function setMsg(id,html,cls){const m=$(id);m.innerHTML=html;m.className='msg'+(cls?' '+cls:'');}
+const K=f=>'<span class="kbd">'+L(f)+'</span>';
+
+// 第 2 步：相对面
+const s2={first:null,right:0,total:0,showAll:false};
+function paintOpp(){
+  hl.tint={};
+  if(s2.showAll)for(let f=0;f<6;f++)hl.tint[f]=PAIR_TINT[f];
+}
+function step2Tap(f){
+  if(s2.showAll){s2.showAll=false;$('showOpp').setAttribute('aria-pressed','false');$('showOpp').classList.remove('on');$('oppLegend').hidden=true;}
+  if(s2.first===null){
+    paintOpp();hl.tint[f]=TINT.sel;hl.ring=f;s2.first=f;
+    setMsg('msg2','已选 '+K(f)+'。现在点你认为和它相对的面。');
+  }else if(s2.first===f){
+    paintOpp();hl.ring=null;s2.first=null;setMsg('msg2','已取消。先点一个面。');
+  }else{
+    const a=s2.first,o=opposite(a);s2.total++;hl.ring=null;paintOpp();
+    const why=oppositeReason(st,a,o);
+    const whyText=why==='line'?'它们在同一行（或同一列），中间正好隔着一个面。':why==='z'?'它们在一个 Z 字形（或拉长的 Z 字形）的两端。':'';
+    if(f===o){
+      s2.right++;hl.tint[a]=TINT.good;hl.tint[f]=TINT.good;
+      setMsg('msg2','<b>对。</b>'+K(a)+' 和 '+K(f)+' 是相对面。'+whyText+'折起来看看，它们一个在前一个在后。','good');
+    }else{
+      hl.tint[a]=TINT.sel;hl.tint[f]=TINT.bad;hl.tint[o]=TINT.good;
+      setMsg('msg2','<b>不对。</b>'+K(a)+' 和 '+K(f)+' 折起来是<b>相邻</b>的，共用一条棱。'+K(a)+' 的相对面是 '+K(o)+'（绿色）。'+whyText,'bad');
+    }
+    s2.first=null;
+    $('score2').textContent='对 '+s2.right+' / 共 '+s2.total;
+  }
+  redrawAll();
+}
+$('showOpp').addEventListener('click',()=>{
+  s2.showAll=!s2.showAll;s2.first=null;hl.ring=null;
+  $('showOpp').setAttribute('aria-pressed',String(s2.showAll));$('showOpp').classList.toggle('on',s2.showAll);
+  paintOpp();
+  const lg=$('oppLegend');lg.hidden=!s2.showAll;
+  lg.innerHTML=PAIR_NAME.map(([a,b,c])=>'<span><span class="sw" style="background:'+c+'"></span>'+L(a)+' ↔ '+L(b)+'</span>').join('');
+  setMsg('msg2',s2.showAll?'同一种颜色的两个面是相对面。数一数：它们在展开图里都不挨着。':'先点一个面。');
+  redrawAll();
+});
+
+// 第 3 步：重合边
+const s3={pairs:[],showAll:false};
+function edgePairsAll(){
+  const out=[],seen=new Set();
+  for(let f=0;f<6;f++)for(const d of DIRS){
+    if(isHinge(st,f,d))continue;
+    const g=edgeTarget(st,f,d),k=[Math.min(f,g),Math.max(f,g)].join('-');
+    if(seen.has(k))continue;seen.add(k);
+    out.push({f,d,g,dg:edgeDirToward(st,g,f)});
+  }
+  return out;
+}
+function segOf(f,d){
+  const [x,y]=st.cell[f],h=0.5;
+  if(d[0]!==0)return [[x+d[0]*h,y-h],[x+d[0]*h,y+h]];
+  return [[x-h,y+d[1]*h],[x+h,y+d[1]*h]];
+}
+function edgeRelation(p){
+  const a=segOf(p.f,p.d),b=segOf(p.g,p.dg);
+  const share=a.some(P=>b.some(Q=>Math.abs(P[0]-Q[0])<1e-9&&Math.abs(P[1]-Q[1])<1e-9));
+  if(share)return '这两条边从同一个点出发，夹成一个直角，所以最先合上。';
+  if(p.d[0]===-p.dg[0]&&p.d[1]===-p.dg[1]){
+    const sameLine=p.d[0]!==0?st.cell[p.f][1]===st.cell[p.g][1]:st.cell[p.f][0]===st.cell[p.g][0];
+    if(sameLine)return '这是一整行（或一整列）面卷成一圈后，首尾的两条外边。';
+  }
+  return '这两条边在展开图里离得比较远，要等旁边的边先合上，它们才会碰到一起。';
+}
+function paintEdges(){
+  hl.edges={};
+  s3.pairs.forEach((p,i)=>{
+    const c=EDGE_COLORS[i%EDGE_COLORS.length];
+    (hl.edges[p.f]=hl.edges[p.f]||{})[key(p.d)]={color:c,num:i+1};
+    (hl.edges[p.g]=hl.edges[p.g]||{})[key(p.dg)]={color:c,num:i+1};
+  });
+}
+function step3Tap(f,x,y){
+  if(Math.max(Math.abs(x),Math.abs(y))<0.22){setMsg('msg3','点得离边近一点：在格子里靠近那条边的地方点。');return;}
+  const d=Math.abs(x)>Math.abs(y)?[Math.sign(x),0]:[0,Math.sign(y)];
+  if(isHinge(st,f,d)){
+    const n=cellAt(st,st.cell[f][0]+d[0],st.cell[f][1]+d[1]);
+    setMsg('msg3','这条边两边都有面（'+K(f)+' 和 '+K(n)+'），它没有被剪开。折的时候它就是转轴，折好后是一条棱。换一条<b>外圈</b>的边试试。');return;
+  }
+  const g=edgeTarget(st,f,d),dg=edgeDirToward(st,g,f);
+  const idx=s3.pairs.findIndex(p=>(p.f===f&&key(p.d)===key(d))||(p.g===f&&key(p.dg)===key(d)));
+  if(idx>=0){s3.pairs.splice(idx,1);if(s3.showAll){s3.showAll=false;$('showEdges').classList.remove('on');$('showEdges').setAttribute('aria-pressed','false');}paintEdges();redrawAll();setMsg('msg3','已取消这一对。');return;}
+  const p={f,d,g,dg};s3.pairs.push(p);paintEdges();redrawAll();
+  setMsg('msg3',K(f)+' 的这条边会和 '+K(g)+' 的那条边粘在一起（第 '+s3.pairs.length+' 对）。'+edgeRelation(p)+' 拖“折叠角度”看它们合上。');
+}
+$('showEdges').addEventListener('click',()=>{
+  s3.showAll=!s3.showAll;
+  $('showEdges').classList.toggle('on',s3.showAll);$('showEdges').setAttribute('aria-pressed',String(s3.showAll));
+  s3.pairs=s3.showAll?edgePairsAll():[];paintEdges();redrawAll();
+  setMsg('msg3',s3.showAll?'7 对重合边都标出来了，编号相同的两条边会粘在一起。先找夹成直角的那几对，再找首尾相接的。':'点外圈的一条边。');
+});
+$('clearEdges').addEventListener('click',()=>{s3.pairs=[];s3.showAll=false;$('showEdges').classList.remove('on');$('showEdges').setAttribute('aria-pressed','false');paintEdges();redrawAll();setMsg('msg3','点外圈的一条边。');});
+
+// 第 4 步：同一个顶点
+function step4Tap(f,x,y){
+  const sx=x>=0?1:-1,sy=y>=0?1:-1;
+  const vk=vertexKey(st,f,sx,sy);
+  hl.dots={};const pts=new Set();
+  for(let g=0;g<6;g++)for(const a of[1,-1])for(const b of[1,-1]){
+    if(vertexKey(st,g,a,b)===vk){
+      (hl.dots[g]=hl.dots[g]||{})[key([a,b])]='#D1495B';
+      pts.add(key([st.cell[g][0]+a*0.5,st.cell[g][1]+b*0.5]));
+    }
+  }
+  const cw=clockwiseAt(vk);
+  redrawAll();
+  setMsg('msg4','这个顶点连着 '+cw.map(K).join('、')+' 三个面。它在展开图里出现在 <b>'+pts.size+'</b> 个位置。<br>从正方体外面看这个角，三个面按顺时针是 '+cw.map(K).join(' → ')+'。');
+}
+
+// 第 5 步：选项
+const s5={opts:null,answered:false,right:0,total:0};
+const ISO=(v,s)=>[(v[0]-v[2])*0.866*s,(-v[1]+(v[0]+v[2])*0.5)*s];
+function drawIso(cv,sl){
+  const dpr=Math.min(window.devicePixelRatio||1,2),W=150;
+  cv.width=W*dpr;cv.height=W*dpr;
+  const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,W);
+  const s=W*0.52,ox=W/2,oy=W/2;
+  const shade={Y:'#FFFFFF',Z:'#F1F2EE',X:'#E2E5E1'};
+  for(const k of['Z','X','Y']){
+    const w=SLOT_W[k],o=sl[k];
+    const c=ISO(w.map(x=>x*0.5),s),U=ISO(o.U,s),V=ISO(o.V,s);
+    const ex=ox+c[0]-0.5*U[0]+0.5*V[0],ey=oy+c[1]-0.5*U[1]+0.5*V[1];
+    g.setTransform(dpr*U[0],dpr*U[1],-dpr*V[0],-dpr*V[1],dpr*ex,dpr*ey);
+    g.fillStyle=shade[k];g.fillRect(0,0,1,1);
+    g.save();g.translate(0.5,0.5);g.scale(1/256,1/256);drawLetter(g,o.f,256);g.restore();
+    g.lineWidth=2.4/s;g.strokeStyle=INK;g.strokeRect(0,0,1,1);
+  }
+  g.setTransform(1,0,0,1,0,0);
+}
+function renderQuiz(){
+  const box=$('opts');box.innerHTML='';
+  s5.opts.forEach((o,i)=>{
+    const b=document.createElement('button');b.type='button';b.className='opt';b.id='opt'+i;
+    const cv=document.createElement('canvas');
+    const tag=document.createElement('span');tag.className='tag';tag.textContent='ABCD'[i];
+    const why=document.createElement('span');why.className='why';
+    b.append(tag,cv,why);box.appendChild(b);
+    drawIso(cv,o.sl);
+    b.setAttribute('aria-label','选项 '+'ABCD'[i]);
+    b.addEventListener('click',()=>answerQuiz(i));
+  });
+}
+function orderText(sl){return VIEW_ORDER.map(k=>L(sl[k].f)).join(' → ');}
+function answerQuiz(i){
+  if(s5.answered)return;
+  s5.answered=true;s5.total++;
+  const ok=s5.opts[i].kind==='ok';if(ok)s5.right++;
+  const good=s5.opts.find(o=>o.kind==='ok');
+  s5.opts.forEach((o,j)=>{
+    const b=$('opt'+j),w=b.querySelector('.why');
+    b.classList.add(o.kind==='ok'?'right':'wrong');if(j===i)b.classList.add('picked');
+    if(o.kind==='ok')w.textContent='能折成。';
+    else if(o.kind==='mirror')w.textContent='镜像：三个面都对，两两相邻也对，但转圈方向反了（它是 '+orderText(o.sl)+'，实际应为 '+orderText(good.sl)+'）。';
+    else if(o.kind==='opp')w.textContent=L(o.a)+' 和 '+L(o.b)+' 是相对面，不可能同时看到。';
+    else w.textContent=L(o.f)+' 面的朝向不对：三个面、转圈顺序都对，要查它的边挨着谁。';
+  });
+  setMsg('msg5',(ok?'<b>对。</b>':'<b>不对。</b>正确的是 '+'ABCD'[s5.opts.findIndex(o=>o.kind==='ok')]+'。')+'看每个选项下面的说明：错误选项各破坏了一个不变量。顺时针指从外面看这个角，按“上 → 右 → 左前”读。',ok?'good':'bad');
+  $('score5').textContent='对 '+s5.right+' / 共 '+s5.total;
+}
+function newQuiz(){s5.opts=makeQuiz();s5.answered=false;renderQuiz();setMsg('msg5','先自己判断，再点选项。');}
+$('newQuiz').addEventListener('click',newQuiz);
+
+// 第 6 步：移动面
+const s6={sel:null,cands:[]};
+const ghostTex=[];
+function clearGhosts(){while(ghostGroup.children.length){const m=ghostGroup.children[0];ghostGroup.remove(m);m.material.map&&m.material.map.dispose();m.material.dispose();}s6.cands=[];}
+function moveCandidates(f){
+  const out=[];
+  if(st.nb[f].length!==1)return out;
+  const par=st.nb[f][0];
+  const anchor=par;
+  for(let g=0;g<6;g++){
+    if(g===f||g===opposite(f)||g===par)continue;
+    const nb=st.nb.map(a=>a.slice());
+    nb[f]=[g];nb[par]=nb[par].filter(x=>x!==f);nb[g].push(f);
+    const r=relayout(nb,anchor,st.cell[anchor],st.Q[anchor]);
+    if(!r)continue;
+    out.push({g,nb,cell:r.cell,Q:r.Q});
+  }
+  return out;
+}
+function makeGhost(f,cand,idx){
+  const c=document.createElement('canvas');c.width=c.height=TEX;const g=c.getContext('2d');
+  g.fillStyle='rgba(251,251,248,0.9)';g.fillRect(0,0,TEX,TEX);
+  const u=mulMV(cand.Q[f],FACES[f].u);
+  g.save();g.translate(TEX/2,TEX/2);g.rotate(-Math.atan2(u[1],u[0]));g.globalAlpha=0.75;drawLetter(g,f,TEX);g.restore();
+  g.setLineDash([22,14]);g.lineWidth=8;g.strokeStyle='#0E6B64';g.strokeRect(6,6,TEX-12,TEX-12);
+  const tex=new THREE.CanvasTexture(c);
+  const m=new THREE.Mesh(PLANE,new THREE.MeshBasicMaterial({map:tex,transparent:true,opacity:0.8,depthWrite:false}));
+  m.position.set(cand.cell[f][0],cand.cell[f][1],0.001);m.userData={kind:'ghost',idx};
+  ghostGroup.add(m);
+}
+function step6Tap(f){
+  clearGhosts();
+  if(fold!==0){setFold(0);}
+  if(st.nb[f].length!==1){
+    hl.ring=null;redrawAll();
+    setMsg('msg6',K(f)+' 连着 '+st.nb[f].length+' 个面，挪它会把展开图拆散。先点一个只挂在一条边上的面。');return;
+  }
+  const cands=moveCandidates(f);s6.sel=f;s6.cands=cands;
+  hl.ring=f;redrawAll();
+  cands.forEach((c,i)=>makeGhost(f,c,i));requestRender();
+  const par=st.nb[f][0];
+  setMsg('msg6',cands.length?K(f)+' 现在挂在 '+K(par)+' 上。它还能挪到 '+cands.length+' 个位置（半透明的格子），点一个试试。':K(f)+' 没有别的位置可以挪。');
+}
+function onGhost(i){
+  const f=s6.sel,c=s6.cands[i];if(f==null||!c)return;
+  const oldA=angleOf(st,f),oldCell=st.cell[f].slice(),oldPar=st.nb[f][0];
+  st={root:st.root===f?oldPar:st.root,nb:c.nb,cell:c.cell,Q:c.Q};
+  const newA=angleOf(st,f);
+  let deg=Math.round((newA-oldA)*180/Math.PI);deg=((deg%360)+540)%360-180;
+  const diag=Math.abs(oldCell[0]-st.cell[f][0])===1&&Math.abs(oldCell[1]-st.cell[f][1])===1;
+  clearGhosts();hl.ring=null;s6.sel=null;
+  buildScene();markNetButtons(-1);
+  const turn=deg===0?'没有转':deg>0?'逆时针转了 '+deg+'°':'顺时针转了 '+(-deg)+'°';
+  setMsg('msg6',K(f)+' 从挂在 '+K(oldPar)+' 上，改成挂在 '+K(c.g)+' 上。字母'+turn+'。'+(diag?'它是绕着 '+K(oldPar)+' 和 '+K(c.g)+' 的公共顶点转过去的。':'')+'现在折起来，看正方体和原来是不是一样。','good');
+}
+$('restoreNet').addEventListener('click',()=>{clearGhosts();loadNet(netIndex);setMsg('msg6','已恢复。点一个最外面的面。');});
+
+function onFaceTap(f,x,y){
+  if(step===2)step2Tap(f);
+  else if(step===3)step3Tap(f,x,y);
+  else if(step===4)step4Tap(f,x,y);
+  else if(step===6)step6Tap(f);
+}
+
+/* ================= 折叠控制、展开图列表、步骤切换 ================= */
+const foldEl=$('fold'),foldOut=$('foldOut'),playBtn=$('playBtn');
+function setFold(v){fold=v;foldEl.value=String(v);foldOut.textContent=v+'°';playBtn.textContent=v>=45?'展开':'折起来';applyFold();}
+foldEl.addEventListener('input',()=>{anim=null;setFold(Number(foldEl.value));});
+let anim=null;
+playBtn.addEventListener('click',()=>{
+  const from=fold,to=fold>=45?0:90;
+  const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const dur=reduce?1:1600,t0=performance.now();
+  if(to===90)clearGhosts();
+  anim={};const me=anim;
+  (function tick(now){
+    if(anim!==me)return;
+    const k=Math.min(1,(now-t0)/dur),e=k<0.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+    setFold(Math.round(from+(to-from)*e));
+    if(k<1)requestAnimationFrame(tick);
+  })(t0);
+});
+$('resetView').addEventListener('click',()=>{orbit.theta=DEFAULT_ORBIT.theta;orbit.phi=DEFAULT_ORBIT.phi;orbit.zoom=1;updateCamera();});
+$('frontView').addEventListener('click',()=>{orbit.theta=0;orbit.phi=Math.PI/2;orbit.zoom=1;updateCamera();});
+
+const netBtns=[];
+(function buildNetList(){
+  const host=$('netGroups');let idx=0;
+  for(const grp of NET_GROUPS){
+    const gEl=document.createElement('div');gEl.className='net-group';
+    const lab=document.createElement('small');lab.textContent=grp.name;
+    const row=document.createElement('div');row.className='net-row';
+    for(const cells of grp.nets){
+      const i=idx++;
+      const xs=cells.map(c=>c[0]),ys=cells.map(c=>c[1]);
+      const w=Math.max(...xs)+1,h=Math.max(...ys)+1,u=9;
+      const b=document.createElement('button');b.type='button';b.className='net-btn';b.setAttribute('aria-pressed','false');
+      b.setAttribute('aria-label',grp.name+' 第 '+(row.children.length+1)+' 种');
+      b.innerHTML='<svg width="'+(w*u+2)+'" height="'+(h*u+2)+'" viewBox="0 0 '+(w*u+2)+' '+(h*u+2)+'" aria-hidden="true">'+cells.map(([c,r])=>'<rect x="'+(c*u+1)+'" y="'+(r*u+1)+'" width="'+u+'" height="'+u+'"/>').join('')+'</svg>';
+      b.addEventListener('click',()=>loadNet(i));
+      row.appendChild(b);netBtns.push(b);
+    }
+    gEl.append(lab,row);host.appendChild(gEl);
+  }
+})();
+function markNetButtons(i){netBtns.forEach((b,j)=>b.setAttribute('aria-pressed',String(j===i)));}
+
+function resetStepState(){
+  clearHl();clearGhosts();
+  s2.first=null;s2.showAll=false;$('showOpp').classList.remove('on');$('showOpp').setAttribute('aria-pressed','false');$('oppLegend').hidden=true;
+  s3.pairs=[];s3.showAll=false;$('showEdges').classList.remove('on');$('showEdges').setAttribute('aria-pressed','false');
+  s6.sel=null;
+  setMsg('msg2','先点一个面。');setMsg('msg3','点外圈的一条边。');setMsg('msg4','点一个格子的角。');setMsg('msg6','点一个最外面的面。');
+}
+function loadNet(i){
+  netIndex=i;st=fromCells(NETS[i]);markNetButtons(i);resetStepState();
+  anim=null;setFold(0);buildScene();
+  if(step===5)newQuiz();
+}
+const HUD={1:'单指拖动：旋转 · 双指或滚轮：缩放',2:'轻点一个面，再点它的相对面',3:'轻点外圈的一条边',4:'轻点一个格子的角',5:'可以把展开图折起来对照选项',6:'轻点最外面的面，再点半透明的格子'};
+function setStep(n){
+  step=n;
+  document.querySelectorAll('.step-btn').forEach(b=>b.setAttribute('aria-selected',String(Number(b.dataset.step)===n)));
+  document.querySelectorAll('.step').forEach(s=>s.hidden=Number(s.dataset.body)!==n);
+  resetStepState();redrawAll();
+  $('hud').textContent=HUD[n];
+  if(n===5&&!s5.opts)newQuiz();
+  if(n===6&&fold!==0){anim=null;setFold(0);}
+  try{localStorage.setItem('lab-step',String(n));}catch(e){}
+}
+document.querySelectorAll('.step-btn').forEach(b=>b.addEventListener('click',()=>setStep(Number(b.dataset.step))));
+
+// 供测试使用
+window.__lab={FACES,NETS,fromCells,relayout,opposite,oppositeReason,edgeTarget,edgeDirToward,isHinge,vertexKey,clockwiseAt,makeQuiz,realizable,viewFromRot,ROTS,moveCandidates:f=>moveCandidates(f),getState:()=>st,setStep,loadNet,setFold,faces,angleOf,edgePairsAll:()=>edgePairsAll()};
+
+loadNet(DEFAULT_NET);
+let saved=1;try{saved=Number(localStorage.getItem('lab-step'))||1;}catch(e){}
+setStep(saved>=1&&saved<=6?saved:1);
+resize();loop();
+})();
+</script>
